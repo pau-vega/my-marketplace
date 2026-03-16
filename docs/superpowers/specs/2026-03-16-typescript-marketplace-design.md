@@ -46,7 +46,10 @@ Single-plugin marketplace with all components at the root level, following the s
       "description": "TypeScript coding conventions with automatic validation, review command, and reviewer agent",
       "version": "1.0.0",
       "category": "development",
-      "keywords": ["typescript", "conventions", "code-review", "linting"]
+      "author": {
+        "name": "Pau Velasco Garrofe"
+      },
+      "tags": ["typescript", "conventions", "code-review", "linting"]
     }
   ]
 }
@@ -128,8 +131,23 @@ description: >
   with conventions (e.g. & to interface extends), and detects bugs, logic
   issues, and opportunities for stricter typing. Use when reviewing TypeScript
   code quality.
+
+  <example>
+  Context: User wants to check their TypeScript code against conventions
+  user: "Review my TypeScript code for quality"
+  assistant: "I'll use the ts-reviewer agent to analyze the code."
+  <commentary>User requesting TS code review triggers this agent.</commentary>
+  </example>
+
+  <example>
+  Context: User completed a feature and wants validation
+  user: "Check if my changes follow our TypeScript rules"
+  assistant: "I'll dispatch the ts-reviewer agent to verify convention compliance."
+  <commentary>Convention compliance check triggers this agent.</commentary>
+  </example>
 model: sonnet
-tools: Read, Glob, Grep, Bash
+color: cyan
+tools: ["Read", "Glob", "Grep", "Bash"]
 ---
 ```
 
