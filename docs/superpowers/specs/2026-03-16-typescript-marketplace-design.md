@@ -11,22 +11,18 @@ my-marketplace/
 ├── .claude-plugin/
 │   ├── marketplace.json
 │   └── plugin.json
-└── plugins/
-    └── typescript-rules/
-        ├── .claude-plugin/
-        │   └── plugin.json
-        ├── skills/
-        │   └── typescript-conventions/
-        │       └── SKILL.md
-        ├── agents/
-        │   └── ts-reviewer.md
-        ├── commands/
-        │   └── ts-review.md
-        └── hooks/
-            ├── hooks.json
-            └── scripts/
-                └── validate-ts.sh
+├── skills/
+│   └── typescript-conventions/
+│       └── SKILL.md
+├── agents/
+│   └── ts-reviewer.md
+├── commands/
+│   └── ts-review.md
+└── hooks/
+    └── hooks.json
 ```
+
+Single-plugin marketplace with all components at the root level, following the standard marketplace convention (e.g., impeccable, superpowers). If more plugins are added later, the structure can be refactored to use explicit path arrays in `marketplace.json`.
 
 ## Components
 
@@ -37,15 +33,16 @@ my-marketplace/
 ```json
 {
   "name": "my-marketplace",
-  "metadata": {
-    "description": "Curated collection of Claude Code plugins for TypeScript development"
+  "description": "Curated collection of Claude Code plugins for TypeScript development",
+  "owner": {
+    "name": "Pau Velasco Garrofe",
+    "email": "pau@example.com"
   },
   "version": "1.0.0",
-  "pluginRoot": "./plugins",
   "plugins": [
     {
       "name": "typescript-rules",
-      "source": "./plugins/typescript-rules",
+      "source": "./",
       "description": "TypeScript coding conventions with automatic validation, review command, and reviewer agent",
       "version": "1.0.0",
       "category": "development",
@@ -55,19 +52,19 @@ my-marketplace/
 }
 ```
 
-**`plugin.json`** (root) — Identifies the marketplace itself as a Claude Code plugin.
+**`plugin.json`** — Identifies the marketplace as a Claude Code plugin.
 
 ```json
 {
-  "name": "my-marketplace",
+  "name": "typescript-rules",
   "version": "1.0.0",
-  "description": "Marketplace for Claude Code plugins"
+  "description": "TypeScript coding conventions with automatic validation, review command, and reviewer agent"
 }
 ```
 
 ### 2. Skill — `typescript-conventions`
 
-**File:** `plugins/typescript-rules/skills/typescript-conventions/SKILL.md`
+**File:** `skills/typescript-conventions/SKILL.md`
 
 **Frontmatter:**
 
@@ -93,28 +90,33 @@ description: >
 
 ### 3. Hooks — Automatic Validation
 
-**File:** `plugins/typescript-rules/hooks/hooks.json`
+**File:** `hooks/hooks.json`
 
 **Type:** `prompt` hook on `PreToolUse` for `Write|Edit` tools.
 
-**Behavior:**
-- Intercepts all `Write` and `Edit` tool calls
-- If the target file is `.ts` or `.tsx`, checks the proposed code against core rules:
-  - No `any`
-  - No `type A = X & Y` for inheritance (use `interface extends`)
-  - No enums (use `as const`)
-  - No default exports (except framework requirements)
-  - No inline `import { type X }` (use `import type { X }`)
-  - No `T | undefined` for optional props (use `prop?: T`)
-- If the file is not `.ts`/`.tsx`, allows immediately
-- If all rules pass, allows the change
-- If rules are violated, blocks with explanation
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Check if the target file is .ts or .tsx. If not, respond with 'approve'. If it is a TypeScript file, validate the proposed code against these rules: (1) No use of 'any' type — use generics, unknown, or overloads, (2) No 'type A = X & Y' for inheritance — use 'interface extends' instead, (3) No enums — use 'as const' objects, (4) No default exports unless required by framework, (5) No inline 'import { type X }' — use top-level 'import type { X }', (6) No 'T | undefined' for optional props — use 'prop?: T'. If all rules pass, respond 'approve'. If any rule is violated, respond 'deny' with an explanation of which rules were broken and how to fix them."
+          }
+        ]
+      }
+    ]
+  }
+}
+```
 
 **Design rationale:** A `prompt` hook lets Claude analyze code semantically without external dependencies. A bash script would require a TypeScript parser or AST tooling, adding fragility and setup complexity. The trade-off is token consumption per Write/Edit on TS files.
 
 ### 4. Agent — `ts-reviewer`
 
-**File:** `plugins/typescript-rules/agents/ts-reviewer.md`
+**File:** `agents/ts-reviewer.md`
 
 **Frontmatter:**
 
@@ -127,22 +129,22 @@ description: >
   issues, and opportunities for stricter typing. Use when reviewing TypeScript
   code quality.
 model: sonnet
-tools: Read, Glob, Grep
+tools: Read, Glob, Grep, Bash
 ---
 ```
 
 **Behavior:**
-1. Discovers target `.ts`/`.tsx` files (from git diff or specified path)
-2. Verifies compliance with all conventions from the skill
+1. Discovers target `.ts`/`.tsx` files — uses `git diff --name-only` (via Bash) when no path is specified, or Glob when a path is provided
+2. Reads and verifies compliance with all conventions from the skill
 3. Suggests refactorings aligned with the rules (e.g., convert `&` to `interface extends`)
 4. Detects bugs, incorrect logic, and opportunities for stricter typing
 5. Reports findings by severity: error, warning, suggestion
 
-**Constraint:** Read-only — the agent reports findings but does not modify code. The user decides what to apply.
+**Constraint:** The agent reports findings but does not modify code. The user decides what to apply. `Bash` access is limited to `git diff` for file discovery.
 
 ### 5. Command — `/ts-review`
 
-**File:** `plugins/typescript-rules/commands/ts-review.md`
+**File:** `commands/ts-review.md`
 
 **Frontmatter:**
 
@@ -150,17 +152,12 @@ tools: Read, Glob, Grep
 ---
 name: ts-review
 description: Run a full TypeScript code review against project conventions
-arguments:
-  - name: path
-    description: File or directory to review (defaults to changed files)
-    required: false
+argument-hint: File or directory to review (defaults to changed files)
+allowed-tools: Agent
 ---
 ```
 
-**Behavior:**
-- Without arguments: reviews `.ts`/`.tsx` files with uncommitted changes (`git diff`)
-- With path argument: reviews the specified file or directory
-- Dispatches the `ts-reviewer` agent to perform the review
+**Body:** The command receives the user's input via `$ARGUMENTS`. If `$ARGUMENTS` is empty, it instructs the `ts-reviewer` agent to review uncommitted changes. If a path is provided, it passes that path to the agent.
 
 **Usage examples:**
 ```
@@ -174,9 +171,9 @@ arguments:
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Hook type | `prompt` over bash script | Semantic code analysis without external dependencies |
-| Agent tools | Read, Glob, Grep only | Agent is read-only; it reports, doesn't modify |
-| Agent model | sonnet | Good balance of quality and speed for code review |
-| Plugin scope | Generic TypeScript | Not tied to any specific framework or stack |
+| Agent tools | Read, Glob, Grep, Bash | Bash needed for `git diff` file discovery; agent remains non-destructive |
+| Agent model | `sonnet` (fixed) | Consistent review quality regardless of parent session model. `inherit` would give user control but inconsistent results |
+| Plugin structure | Flat (root-level) | Single-plugin marketplace follows standard conventions (impeccable, superpowers) |
 | Marketplace type | Git repository | Simple distribution via `claude plugins add <repo>` |
 
 ## Success Criteria
