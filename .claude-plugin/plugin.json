@@ -1,0 +1,5 @@
+{
+  "name": "typescript-rules",
+  "version": "1.0.0",
+  "description": "TypeScript coding conventions with automatic validation, review command, and reviewer agent"
+}

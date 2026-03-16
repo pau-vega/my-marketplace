@@ -1,0 +1,22 @@
+{
+  "name": "my-marketplace",
+  "description": "Curated collection of Claude Code plugins for TypeScript development",
+  "owner": {
+    "name": "Pau Velasco Garrofe",
+    "email": "pau@example.com"
+  },
+  "version": "1.0.0",
+  "plugins": [
+    {
+      "name": "typescript-rules",
+      "source": "./",
+      "description": "TypeScript coding conventions with automatic validation, review command, and reviewer agent",
+      "version": "1.0.0",
+      "category": "development",
+      "author": {
+        "name": "Pau Velasco Garrofe"
+      },
+      "tags": ["typescript", "conventions", "code-review", "linting"]
+    }
+  ]
+}
