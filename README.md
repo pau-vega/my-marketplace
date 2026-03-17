@@ -15,18 +15,33 @@ This plugin provides opinionated TypeScript conventions and enforces them automa
 
 ## Installation
 
-Add the plugin to your Claude Code project settings:
+Requires [Claude Code](https://docs.anthropic.com/en/docs/claude-code) v1.0.33 or later.
 
-```bash
-claude mcp add-plugin typescript-rules -- https://github.com/pau-vega/my-marketplace
+### 1. Add the marketplace
+
+From within Claude Code, run:
+
+```
+/plugin marketplace add pau-vega/my-marketplace
 ```
 
-Or manually add it to `.claude/settings.json`:
+### 2. Install the plugin
 
-```json
-{
-  "plugins": ["typescript-rules@my-marketplace"]
-}
+```
+/plugin install typescript-rules@pau-vega-my-marketplace
+```
+
+### 3. Activate
+
+Run `/reload-plugins` to load the plugin without restarting.
+
+### Alternative: test locally
+
+Clone the repo and load it directly:
+
+```bash
+git clone https://github.com/pau-vega/my-marketplace.git
+claude --plugin-dir ./my-marketplace
 ```
 
 ## Usage
@@ -34,9 +49,9 @@ Or manually add it to `.claude/settings.json`:
 ### Review your code
 
 ```
-/ts-review              # reviews uncommitted changes or last commit
-/ts-review src/utils    # reviews a specific directory
-/ts-review src/app.ts   # reviews a specific file
+/typescript-rules:ts-review              # reviews uncommitted changes or last commit
+/typescript-rules:ts-review src/utils    # reviews a specific directory
+/typescript-rules:ts-review src/app.ts   # reviews a specific file
 ```
 
 ### Reference conventions

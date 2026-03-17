@@ -15,6 +15,11 @@ else
   CONTENT=$(echo "$INPUT" | jq -r '.tool_input.new_string')
 fi
 
+# Allow default exports in framework-required files (Next.js pages, layouts, etc.)
+if echo "$FILE_PATH" | grep -qE '/(page|layout|loading|error|not-found|template|default)\.(ts|tsx)$'; then
+  exit 0
+fi
+
 if echo "$CONTENT" | grep -q 'export default'; then
   echo "Blocked: do not use 'export default' — use named exports instead" >&2
   exit 2

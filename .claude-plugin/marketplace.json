@@ -2,8 +2,7 @@
   "name": "my-marketplace",
   "description": "Curated collection of Claude Code plugins for TypeScript development",
   "owner": {
-    "name": "Pau Velasco Garrofe",
-    "email": "pau@example.com"
+    "name": "Pau Velasco Garrofe"
   },
   "version": "1.0.0",
   "plugins": [
