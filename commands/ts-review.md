@@ -2,7 +2,8 @@
 name: ts-review
 description: Run a full TypeScript code review against project conventions
 argument-hint: File or directory to review (defaults to changed files)
-allowed-tools: Agent
+allowed-tools:
+  - Agent
 ---
 
 Dispatch the `ts-reviewer` agent to perform a full TypeScript code review.
