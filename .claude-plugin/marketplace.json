@@ -16,6 +16,17 @@
         "name": "Pau Velasco Garrofe"
       },
       "tags": ["typescript", "conventions", "code-review", "linting"]
+    },
+    {
+      "name": "jsdoc-standards",
+      "source": "./jsdoc-standards",
+      "description": "JSDoc documentation standards with three enforcement levels (Minimal, Standard, Strict), automatic warnings, and on-demand review",
+      "version": "0.1.0",
+      "category": "development",
+      "author": {
+        "name": "Pau Velasco Garrofe"
+      },
+      "tags": ["jsdoc", "documentation", "typescript", "code-quality"]
     }
   ]
 }

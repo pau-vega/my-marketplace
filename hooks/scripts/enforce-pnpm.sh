@@ -1,6 +1,6 @@
 #!/bin/bash
 INPUT=$(cat)
-COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command')
+COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command' || true)
 
 # Split chained commands (&&, ||, ;) into separate lines and check if any
 # starts with npm/yarn. This avoids false positives when "npm" appears
