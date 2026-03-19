@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Plugin Marketplace</title>
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=space-grotesk:500,600,700" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+
+    --bg: #0f0e0c;
+    --bg-card: #171614;
+    --bg-card-hover: #1d1c19;
+    --bg-surface: #1f1e1b;
+    --bg-input: #131210;
+    --border: #2a2824;
+    --border-hover: #3a3832;
+    --text: #edecea;
+    --text-dim: #8e8c84;
+    --text-muted: #5c5a52;
+    --accent: #7c6aef;
+    --accent-dim: #6355c0;
+    --accent-subtle: rgba(124, 106, 239, 0.1);
+    --tag-skill-bg: rgba(52, 180, 130, 0.1);
+    --tag-skill-text: #3db88a;
+    --tag-agent-bg: rgba(90, 150, 220, 0.1);
+    --tag-agent-text: #6aa4dc;
+    --tag-hook-bg: rgba(210, 160, 50, 0.1);
+    --tag-hook-text: #c8a040;
+    --tag-command-bg: rgba(200, 110, 110, 0.1);
+    --tag-command-text: #c47a7a;
+    --radius: 8px;
+    --radius-sm: 5px;
+    --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  [data-theme="light"] {
+    --bg: #f5f4f1;
+    --bg-card: #fefefe;
+    --bg-card-hover: #faf9f6;
+    --bg-surface: #edece8;
+    --bg-input: #fefefe;
+    --border: #dcdad4;
+    --border-hover: #c4c2bc;
+    --text: #1c1b18;
+    --text-dim: #5a5850;
+    --text-muted: #8a8880;
+    --accent: #6355c0;
+    --accent-dim: #5648a8;
+    --accent-subtle: rgba(99, 85, 192, 0.08);
+    --tag-skill-bg: rgba(20, 140, 90, 0.08);
+    --tag-skill-text: #148c5a;
+    --tag-agent-bg: rgba(40, 100, 180, 0.08);
+    --tag-agent-text: #2864b4;
+    --tag-hook-bg: rgba(160, 120, 20, 0.08);
+    --tag-hook-text: #9a7418;
+    --tag-command-bg: rgba(170, 70, 70, 0.08);
+    --tag-command-text: #a84848;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  /* Focus styles */
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Header */
+  header {
+    padding: 32px 40px 0;
+    position: sticky;
+    top: 0;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 24px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  header h1 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+
+  header h1 span {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 15px;
+    margin-left: 2px;
+  }
+
+  .version-badge {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    flex-shrink: 0;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Search */
+  .search-wrap {
+    position: relative;
+    width: 280px;
+    flex-shrink: 0;
+  }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s var(--ease-out-quart);
+  }
+
+  .search-input::placeholder { color: var(--text-muted); }
+  .search-input:focus { border-color: var(--accent); box-shadow: var(--focus-ring); }
+
+  /* Stats line */
+  .stats-line {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 16px 40px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: fade-up 0.3s var(--ease-out-quart) both;
+  }
+
+  .stats-line .stat-value {
+    color: var(--text-dim);
+    font-weight: 600;
+    font-family: var(--font-display);
+  }
+
+  .stats-line .stat-sep {
+    color: var(--border-hover);
+    margin: 0 4px;
+    user-select: none;
+  }
+
+  /* Filters */
+  .filters {
+    display: flex;
+    gap: 6px;
+    padding: 20px 40px 0;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filters [role="group"] {
+    display: contents;
+  }
+
+  .filter-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 6px;
+    font-weight: 500;
+  }
+
+  .filter-btn {
+    padding: 5px 12px;
+    min-height: 32px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: color 0.15s var(--ease-out-quart), background 0.15s var(--ease-out-quart), border-color 0.15s var(--ease-out-quart);
+    font-family: inherit;
+  }
+
+  .filter-btn:hover {
+    color: var(--text-dim);
+    background: var(--tag-bg);
+  }
+
+  .filter-btn[aria-pressed="true"] {
+    border-color: var(--border);
+    background: var(--bg-surface);
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .filter-btn:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+
+  /* Main grid */
+  main {
+    padding: 28px 40px 64px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(460px, 100%), 1fr));
+    gap: 12px;
+  }
+
+  /* Plugin card — minimal, border only on interaction */
+  .plugin-card {
+    background: var(--bg-card);
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    transition: border-color 0.15s var(--ease-out-quart), background 0.15s var(--ease-out-quart);
+    animation: fade-up 0.3s var(--ease-out-quart) both;
+  }
+
+  .plugin-card:nth-child(2) { animation-delay: 60ms; }
+  .plugin-card:nth-child(3) { animation-delay: 120ms; }
+  .plugin-card:nth-child(4) { animation-delay: 180ms; }
+  .plugin-card:nth-child(5) { animation-delay: 240ms; }
+
+  .plugin-card:hover {
+    border-color: var(--border);
+    background: var(--bg-card-hover);
+  }
+
+  .plugin-card.expanded {
+    border-color: var(--border);
+  }
+
+  .card-toggle {
+    width: 100%;
+    padding: 20px 24px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+  }
+
+  .card-toggle:focus-visible {
+    box-shadow: inset var(--focus-ring);
+    border-radius: var(--radius);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .plugin-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    background: var(--tag-bg);
+    color: var(--text-dim);
+  }
+
+  .card-name {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+
+  .card-version {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+
+  .expand-icon {
+    color: var(--text-muted);
+    transition: transform 0.25s var(--ease-out-expo);
+    flex-shrink: 0;
+    margin-top: 4px;
+    opacity: 0.5;
+  }
+
+  .plugin-card:hover .expand-icon {
+    opacity: 1;
+  }
+
+  .plugin-card.expanded .expand-icon {
+    transform: rotate(180deg);
+    opacity: 1;
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.55;
+    overflow-wrap: break-word;
+  }
+
+  .card-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+  }
+
+  .tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .tag.skill { background: var(--tag-skill-bg); color: var(--tag-skill-text); }
+  .tag.agent { background: var(--tag-agent-bg); color: var(--tag-agent-text); }
+  .tag.hook { background: var(--tag-hook-bg); color: var(--tag-hook-text); }
+  .tag.command { background: var(--tag-command-bg); color: var(--tag-command-text); }
+
+  /* Expanded content — grid-row animation */
+  .card-detail {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.35s var(--ease-out-expo);
+  }
+
+  .plugin-card.expanded .card-detail {
+    grid-template-rows: 1fr;
+  }
+
+  .card-detail-inner-wrap {
+    overflow: hidden;
+  }
+
+  .detail-inner {
+    padding: 0 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .detail-divider {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 4px;
+  }
+
+  .detail-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .detail-section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 14px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    transition: border-color 0.15s var(--ease-out-quart);
+  }
+
+  .detail-item:hover {
+    border-color: var(--border);
+  }
+
+  .detail-item-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .detail-item-name {
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .detail-item-version {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .detail-item-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    overflow-wrap: break-word;
+  }
+
+  .detail-item-command {
+    font-size: 11px;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    padding: 2px 0;
+    margin-top: 2px;
+  }
+
+  .detail-item-command:hover {
+    text-decoration: underline;
+  }
+
+  .detail-item-command:focus-visible {
+    box-shadow: var(--focus-ring);
+    border-radius: 2px;
+  }
+
+  .copy-feedback {
+    font-size: 10px;
+    color: var(--tag-skill-text);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.2s var(--ease-out-quart), transform 0.2s var(--ease-out-quart);
+  }
+
+  .copy-feedback.show {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .hook-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 14px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-sm);
+  }
+
+  .hook-event {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--tag-hook-text);
+    font-family: var(--font-mono);
+  }
+
+  .hook-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding-left: 2px;
+  }
+
+  /* Install section */
+  .install-section {
+    padding: 14px 16px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .install-cmd {
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+  }
+
+  .install-copy-btn {
+    padding: 6px 14px;
+    min-height: 32px;
+    background: var(--accent);
+    color: #f5f5f7;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: background 0.15s var(--ease-out-quart), transform 0.1s var(--ease-out-quart);
+    flex-shrink: 0;
+  }
+
+  .install-copy-btn:hover {
+    background: var(--accent-dim);
+  }
+
+  .install-copy-btn:active {
+    transform: scale(0.96);
+  }
+
+  .install-copy-btn:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+
+  /* Empty state */
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: left;
+    padding: 64px 0;
+    color: var(--text-muted);
+  }
+
+  .empty-state h3 {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-dim);
+  }
+
+  .empty-state p {
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  .empty-state-reset {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.15s var(--ease-out-quart), color 0.15s var(--ease-out-quart), transform 0.1s var(--ease-out-quart);
+  }
+
+  .empty-state-reset:hover {
+    border-color: var(--border-hover);
+    color: var(--text);
+  }
+
+  .empty-state-reset:active {
+    transform: scale(0.96);
+  }
+
+  /* Live region for screen reader announcements */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    main {
+      grid-template-columns: 1fr;
+      padding: 20px 20px 64px;
+    }
+    header { padding: 24px 20px 0; }
+    .header-top { flex-wrap: wrap; }
+    .search-wrap { width: 100%; order: 3; }
+    .stats-line { padding: 12px 20px 0; }
+    .filters { padding: 16px 20px 0; }
+  }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 22px; }
+    header h1 span { font-size: 13px; }
+    .card-toggle { padding: 16px; }
+    .detail-inner { padding: 0 16px 16px; }
+  }
+
+  /* Scrollbar — Webkit + Firefox */
+  html {
+    scrollbar-color: var(--border) transparent;
+    scrollbar-width: thin;
+  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+  /* Theme toggle */
+  .theme-toggle {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s var(--ease-out-quart), color 0.15s var(--ease-out-quart), transform 0.1s var(--ease-out-quart);
+    flex-shrink: 0;
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--border-hover);
+    color: var(--text);
+  }
+
+  .theme-toggle:active {
+    transform: scale(0.92);
+  }
+
+  .theme-toggle:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+
+  /* Theme icon visibility via CSS */
+  [data-theme="dark"] #icon-sun,
+  [data-theme="light"] #icon-moon { display: none; }
+  [data-theme="dark"] #icon-moon,
+  [data-theme="light"] #icon-sun { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="header-left">
+      <h1>Plugin Marketplace <span>by Pau Velasco</span></h1>
+      <span class="version-badge">v1.0.0</span>
+    </div>
+    <div class="header-right">
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" type="search" placeholder="Search plugins, skills, agents..." id="search" autocomplete="off" aria-label="Search plugins, skills, agents">
+      </div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode" title="Toggle theme">
+        <svg id="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="stats-line" id="stats-bar" aria-label="Marketplace statistics" role="status"></div>
+
+<nav class="filters" id="filters" aria-label="Filter plugins by component type">
+  <span class="filter-label" id="filter-group-label">Show</span>
+  <div role="group" aria-labelledby="filter-group-label">
+    <button class="filter-btn" aria-pressed="true" data-filter="component" data-value="all">All</button>
+    <button class="filter-btn" aria-pressed="false" data-filter="component" data-value="skills">Skills</button>
+    <button class="filter-btn" aria-pressed="false" data-filter="component" data-value="agents">Agents</button>
+    <button class="filter-btn" aria-pressed="false" data-filter="component" data-value="hooks">Hooks</button>
+    <button class="filter-btn" aria-pressed="false" data-filter="component" data-value="commands">Commands</button>
+  </div>
+</nav>
+
+<main id="main"></main>
+
+<!-- Live region for screen reader announcements -->
+<div id="live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+const PLUGINS = [
+  {
+    "id": "typescript-rules",
+    "name": "TypeScript Rules",
+    "version": "1.0.0",
+    "description": "TypeScript coding conventions with automatic validation, review command, and reviewer agent. Enforces interface extends over &, discriminated unions, no enums, no any, no default exports, and import type usage.",
+    "category": "development",
+    "icon": "TS",
+    "iconClass": "typescript",
+    "source": "./",
+    "skills": [
+      {
+        "name": "typescript-conventions",
+        "version": "0.0.0",
+        "description": "TypeScript coding conventions covering types & interfaces, functions & error handling, imports, and naming conventions",
+        "command": "/typescript-rules:typescript-conventions"
+      }
+    ],
+    "agents": [
+      {
+        "name": "ts-reviewer",
+        "description": "Reviews TypeScript code for rule compliance, suggests refactorings aligned with conventions, and detects bugs, logic issues, and opportunities for stricter typing"
+      }
+    ],
+    "hooks": [
+      {
+        "event": "PreToolUse (Bash)",
+        "rules": [
+          "Enforce pnpm package manager"
+        ]
+      },
+      {
+        "event": "PreToolUse (Write|Edit)",
+        "rules": [
+          "Block package.json edits",
+          "No enum usage",
+          "No export default",
+          "No any type"
+        ]
+      },
+      {
+        "event": "PreToolUse (Write|Edit) \u2014 Prompt",
+        "rules": [
+          "Validate .ts/.tsx files against six core TypeScript rules"
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "name": "/typescript-rules:ts-review",
+        "description": "Run a full TypeScript code review against project conventions"
+      }
+    ]
+  },
+  {
+    "id": "jsdoc-standards",
+    "name": "JSDoc Standards",
+    "version": "0.1.0",
+    "description": "JSDoc documentation standards with three enforcement levels (Minimal, Standard, Strict), automatic warnings on missing docs, and on-demand review command.",
+    "category": "development",
+    "icon": "/**",
+    "iconClass": "documentation",
+    "source": "./jsdoc-standards",
+    "skills": [
+      {
+        "name": "jsdoc-conventions",
+        "version": "0.0.0",
+        "description": "TypeScript JSDoc documentation conventions with three enforcement levels (Minimal, Standard, Strict). Provides rules for tag usage, format, and level selection",
+        "command": "/jsdoc-standards:jsdoc-conventions"
+      }
+    ],
+    "agents": [
+      {
+        "name": "jsdoc-reviewer",
+        "description": "Reviews TypeScript code for JSDoc documentation compliance across three enforcement levels (Minimal, Standard, Strict)"
+      }
+    ],
+    "hooks": [
+      {
+        "event": "PreToolUse (Write|Edit)",
+        "rules": [
+          "Warn on missing JSDoc documentation"
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "name": "/jsdoc-standards:jsdoc-review",
+        "description": "Review TypeScript files for JSDoc compliance at a specified enforcement level"
+      }
+    ]
+  }
+];
+
+// HTML escaping to prevent XSS
+function esc(str) {
+  const el = document.createElement('span');
+  el.textContent = str;
+  return el.innerHTML;
+}
+
+// Screen reader announcements
+function announce(message) {
+  const region = document.getElementById('live-region');
+  region.textContent = '';
+  requestAnimationFrame(() => { region.textContent = message; });
+}
+
+// State
+const state = {
+  search: '',
+  componentFilter: 'all',
+  expanded: new Set(),
+};
+
+// Compute stats
+function getStats() {
+  const visible = getFilteredPlugins();
+  return {
+    plugins: visible.length,
+    skills: visible.reduce((n, p) => n + p.skills.length, 0),
+    agents: visible.reduce((n, p) => n + p.agents.length, 0),
+    hooks: visible.reduce((n, p) => n + p.hooks.length, 0),
+  };
+}
+
+function renderStats() {
+  const s = getStats();
+  const parts = [
+    `<span class="stat-value">${s.plugins}</span> plugin${s.plugins !== 1 ? 's' : ''}`,
+    `<span class="stat-value">${s.skills}</span> skill${s.skills !== 1 ? 's' : ''}`,
+    `<span class="stat-value">${s.agents}</span> agent${s.agents !== 1 ? 's' : ''}`,
+    `<span class="stat-value">${s.hooks}</span> hook rule${s.hooks !== 1 ? 's' : ''}`,
+  ];
+  document.getElementById('stats-bar').innerHTML = parts.join('<span class="stat-sep">\u00b7</span>');
+}
+
+function matchesSearch(plugin) {
+  if (!state.search) return true;
+  const q = state.search.toLowerCase();
+  const hay = [
+    plugin.name, plugin.description, plugin.id,
+    ...plugin.skills.map(s => s.name + ' ' + s.description),
+    ...plugin.agents.map(a => a.name + ' ' + a.description),
+    ...plugin.hooks.flatMap(h => [h.event, ...h.rules]),
+  ].join(' ').toLowerCase();
+  return q.split(/\s+/).every(w => hay.includes(w));
+}
+
+function matchesComponent(plugin) {
+  if (state.componentFilter === 'all') return true;
+  if (state.componentFilter === 'skills') return plugin.skills.length > 0;
+  if (state.componentFilter === 'agents') return plugin.agents.length > 0;
+  if (state.componentFilter === 'hooks') return plugin.hooks.length > 0;
+  if (state.componentFilter === 'commands') return plugin.commands && plugin.commands.length > 0;
+  return true;
+}
+
+function getFilteredPlugins() {
+  return PLUGINS.filter(p => matchesSearch(p) && matchesComponent(p));
+}
+
+function copyText(text, feedbackEl) {
+  navigator.clipboard.writeText(text).then(() => {
+    announce('Copied to clipboard');
+    if (feedbackEl) {
+      feedbackEl.classList.add('show');
+      setTimeout(() => feedbackEl.classList.remove('show'), 1200);
+    }
+  });
+}
+
+function handleCopyInstall(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    announce('Install command copied to clipboard');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 1200);
+  });
+}
+
+function renderPlugins() {
+  const mainEl = document.getElementById('main');
+  const plugins = getFilteredPlugins();
+
+  if (plugins.length === 0) {
+    mainEl.innerHTML = `
+      <div class="empty-state" role="status">
+        <h3>No plugins match</h3>
+        <p>Try adjusting your search or filters.</p>
+        <button class="empty-state-reset" onclick="resetFilters()">Clear all filters</button>
+      </div>
+    `;
+    return;
+  }
+
+  mainEl.innerHTML = plugins.map(p => {
+    const isExpanded = state.expanded.has(p.id);
+    const detailId = `detail-${esc(p.id)}`;
+
+    const tags = [];
+    if (p.skills.length) tags.push(`<span class="tag skill">${p.skills.length} skill${p.skills.length > 1 ? 's' : ''}</span>`);
+    if (p.agents.length) tags.push(`<span class="tag agent">${p.agents.length} agent${p.agents.length > 1 ? 's' : ''}</span>`);
+    if (p.hooks.length) tags.push(`<span class="tag hook">${p.hooks.reduce((n, h) => n + h.rules.length, 0)} hook rule${p.hooks.reduce((n, h) => n + h.rules.length, 0) > 1 ? 's' : ''}</span>`);
+    if (p.commands && p.commands.length) tags.push(`<span class="tag command">${p.commands.length} command${p.commands.length > 1 ? 's' : ''}</span>`);
+
+    let detailContent = '';
+    let sections = '<div class="detail-divider"></div>';
+
+    if (p.skills.length) {
+      sections += `
+        <div class="detail-section">
+          <div class="detail-section-title">Skills</div>
+          ${p.skills.map(s => `
+            <div class="detail-item">
+              <div class="detail-item-header">
+                <span class="detail-item-name">${esc(s.name)}</span>
+                ${s.version !== '0.0.0' ? `<span class="detail-item-version">v${esc(s.version)}</span>` : ''}
+              </div>
+              <div class="detail-item-desc">${esc(s.description)}</div>
+              ${s.command ? `<button class="detail-item-command" data-copy="${esc(s.command)}">${esc(s.command)} <span class="copy-feedback" aria-hidden="true">Copied!</span></button>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    if (p.agents.length) {
+      sections += `
+        <div class="detail-section">
+          <div class="detail-section-title">Agents</div>
+          ${p.agents.map(a => `
+            <div class="detail-item">
+              <div class="detail-item-header">
+                <span class="detail-item-name">${esc(a.name)}</span>
+              </div>
+              <div class="detail-item-desc">${esc(a.description)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    if (p.hooks.length) {
+      sections += `
+        <div class="detail-section">
+          <div class="detail-section-title">Hooks</div>
+          ${p.hooks.map(h => `
+            <div class="hook-item">
+              <span class="hook-event">${esc(h.event)}</span>
+              ${h.rules.map(r => `<span class="hook-desc">\u2022 ${esc(r)}</span>`).join('')}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    if (p.commands && p.commands.length) {
+      sections += `
+        <div class="detail-section">
+          <div class="detail-section-title">Commands</div>
+          ${p.commands.map(c => `
+            <div class="detail-item">
+              <div class="detail-item-header">
+                <span class="detail-item-name">${esc(c.name)}</span>
+              </div>
+              <div class="detail-item-desc">${esc(c.description)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    const installCmd = `claude mcp add-plugin ${p.source}`;
+    sections += `
+      <div class="install-section">
+        <code class="install-cmd">${esc(installCmd)}</code>
+        <button class="install-copy-btn" data-install="${esc(installCmd)}">Copy</button>
+      </div>
+    `;
+
+    detailContent = `<div class="card-detail-inner-wrap"><div class="detail-inner">${sections}</div></div>`;
+
+    return `
+      <article class="plugin-card ${isExpanded ? 'expanded' : ''}" data-id="${esc(p.id)}">
+        <button class="card-toggle" aria-expanded="${isExpanded}" aria-controls="${detailId}" data-card-id="${esc(p.id)}">
+          <div class="card-top">
+            <div class="card-title-row">
+              <div class="plugin-icon" aria-hidden="true">${esc(p.icon)}</div>
+              <span class="card-name">${esc(p.name)}</span>
+              <span class="card-version">v${esc(p.version)}</span>
+            </div>
+            <svg class="expand-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="card-desc">${esc(p.description)}</div>
+          <div class="card-tags">${tags.join('')}</div>
+        </button>
+        <div class="card-detail" id="${detailId}" role="region" aria-label="${esc(p.name)} details">${detailContent}</div>
+      </article>
+    `;
+  }).join('');
+}
+
+function toggleCard(id) {
+  if (state.expanded.has(id)) {
+    state.expanded.delete(id);
+    announce('Collapsed');
+  } else {
+    state.expanded.add(id);
+    announce('Expanded');
+  }
+  renderPlugins();
+}
+
+function resetFilters() {
+  state.search = '';
+  state.componentFilter = 'all';
+  document.getElementById('search').value = '';
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.setAttribute('aria-pressed', b.dataset.value === 'all' ? 'true' : 'false');
+  });
+  render();
+  announce('Filters cleared');
+}
+
+function render() {
+  renderStats();
+  renderPlugins();
+}
+
+// Debounce search for performance
+let searchTimeout;
+document.getElementById('search').addEventListener('input', (e) => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    state.search = e.target.value;
+    render();
+    const count = getFilteredPlugins().length;
+    announce(`${count} plugin${count !== 1 ? 's' : ''} found`);
+  }, 200);
+});
+
+// Event delegation for card toggles, copy buttons, install buttons
+document.getElementById('main').addEventListener('click', (e) => {
+  const toggle = e.target.closest('.card-toggle');
+  if (toggle) {
+    toggleCard(toggle.dataset.cardId);
+    return;
+  }
+
+  const copyBtn = e.target.closest('.detail-item-command');
+  if (copyBtn) {
+    e.stopPropagation();
+    copyText(copyBtn.dataset.copy, copyBtn.querySelector('.copy-feedback'));
+    return;
+  }
+
+  const installBtn = e.target.closest('.install-copy-btn');
+  if (installBtn) {
+    e.stopPropagation();
+    handleCopyInstall(installBtn, installBtn.dataset.install);
+    return;
+  }
+});
+
+document.getElementById('filters').addEventListener('click', (e) => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+
+  const filterType = btn.dataset.filter;
+  const value = btn.dataset.value;
+
+  if (filterType === 'component') state.componentFilter = value;
+
+  document.querySelectorAll(`.filter-btn[data-filter="${filterType}"]`).forEach(b => {
+    b.setAttribute('aria-pressed', 'false');
+  });
+  btn.setAttribute('aria-pressed', 'true');
+
+  render();
+  announce(`Filter: ${value}`);
+});
+
+// Keyboard shortcut
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('search').focus();
+  }
+});
+
+// Theme toggle
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+}
+
+const savedTheme = localStorage.getItem('marketplace-theme') || 'dark';
+applyTheme(savedTheme);
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('marketplace-theme', next);
+  announce(`${next} theme`);
+});
+
+// Initial render
+render();
+</script>
+</body>
+</html>
