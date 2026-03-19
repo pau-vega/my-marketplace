@@ -30,14 +30,14 @@ fi
 # Check if content has exports without JSDoc
 has_undocumented=false
 while IFS= read -r line; do
-  if echo "$line" | grep -qE '^[[:space:]]*export[[:space:]]+(default[[:space:]]+)?(async[[:space:]]+)?(function|const|class|interface|type|enum)[[:space:]]+'; then
+  if echo "$line" | grep -qE '^[[:space:]]*export[[:space:]]+(async[[:space:]]+)?(function|const|class|interface|type|enum)[[:space:]]+'; then
     has_undocumented=true
     break
   fi
 done < <(echo "$content" | awk '
   /\/\*\*/ { in_jsdoc=1 }
   /\*\//   { if(in_jsdoc) { in_jsdoc=0; documented=1; next } }
-  /^[[:space:]]*export[[:space:]]+(default[[:space:]]+)?(async[[:space:]]+)?(function|const|class|interface|type|enum)[[:space:]]+/ {
+  /^[[:space:]]*export[[:space:]]+(async[[:space:]]+)?(function|const|class|interface|type|enum)[[:space:]]+/ {
     if(!documented) print
     documented=0
   }

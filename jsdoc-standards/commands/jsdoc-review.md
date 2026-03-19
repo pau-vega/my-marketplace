@@ -6,16 +6,14 @@ description: >
   "/jsdoc-review standard", or "/jsdoc-review strict".
 argument-hint: "[minimal|standard|strict] [path]"
 allowed-tools:
-  - Read
-  - Glob
-  - Grep
-  - Bash
   - Agent
 ---
 
 # JSDoc Review
 
 Dispatch the `jsdoc-reviewer` agent to audit TypeScript files for JSDoc compliance.
+
+Arguments: $ARGUMENTS
 
 ## Argument Parsing
 
