@@ -1,6 +1,9 @@
 ---
 name: create-workflow
-description: This skill should be used when the user asks to "show my workflow", "what skills are available", "start a workflow", "create-workflow", "show the development process", or wants an overview of the available development workflow skills and when to use each one.
+description: Start a guided development workflow from idea to implementation
+argument-hint: Describe the feature or idea you want to build
+allowed-tools:
+  - Agent
 ---
 
 # Development Workflow
@@ -71,6 +74,10 @@ A guided development process from idea to implementation. Each skill handles one
 
 **Trigger:** "Improve the architecture"
 
-## Usage
+## Getting Started
 
 Start at any point. Not every project needs all five steps — a quick bug fix might only need TDD, while a new feature benefits from the full pipeline. Each skill works independently.
+
+If an argument was provided, begin with **Grill Me** to stress-test the idea:
+
+$ARGUMENTS
