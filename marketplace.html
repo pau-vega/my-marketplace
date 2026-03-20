@@ -4,13 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Plugin Marketplace</title>
-<link rel="preconnect" href="https://fonts.bunny.net">
-<link href="https://fonts.bunny.net/css?family=space-grotesk:500,600,700" rel="stylesheet">
+<script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('marketplace-theme')||'dark')}catch(e){document.documentElement.setAttribute('data-theme','dark')}</script>
+<link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
+<link href="https://fonts.bunny.net/css?family=space-grotesk:500,600,700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  /* Fallback font metrics to minimize CLS during font swap */
+  @font-face {
+    font-family: 'Space Grotesk Fallback';
+    src: local('Arial');
+    size-adjust: 105%;
+    ascent-override: 90%;
+    descent-override: 22%;
+    line-gap-override: 0%;
+  }
+
   :root {
-    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-display: 'Space Grotesk', 'Space Grotesk Fallback', system-ui, sans-serif;
     --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     --font-mono: ui-monospace, 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
 
@@ -22,8 +33,8 @@
     --border: #2a2824;
     --border-hover: #3a3832;
     --text: #edecea;
-    --text-dim: #8e8c84;
-    --text-muted: #5c5a52;
+    --text-dim: #9b9990;
+    --text-muted: #7a7870;
     --accent: #7c6aef;
     --accent-dim: #6355c0;
     --accent-subtle: rgba(124, 106, 239, 0.1);
@@ -40,6 +51,8 @@
     --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
     --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --duration-fast: 0.15s;
+    --text-on-accent: #f5f5f7;
   }
 
   [data-theme="light"] {
@@ -51,8 +64,8 @@
     --border: #dcdad4;
     --border-hover: #c4c2bc;
     --text: #1c1b18;
-    --text-dim: #5a5850;
-    --text-muted: #8a8880;
+    --text-dim: #4a4840;
+    --text-muted: #6b6960;
     --accent: #6355c0;
     --accent-dim: #5648a8;
     --accent-subtle: rgba(99, 85, 192, 0.08);
@@ -64,6 +77,7 @@
     --tag-hook-text: #9a7418;
     --tag-command-bg: rgba(170, 70, 70, 0.08);
     --tag-command-text: #a84848;
+    --text-on-accent: #ffffff;
   }
 
   body {
@@ -76,8 +90,23 @@
 
   /* Focus styles */
   :focus-visible {
-    outline: none;
+    outline: 2px solid transparent; /* visible in forced-colors mode */
+    outline-offset: 2px;
     box-shadow: var(--focus-ring);
+  }
+
+  /* Forced colors (Windows High Contrast) */
+  @media (forced-colors: active) {
+    :focus-visible {
+      outline: 2px solid Highlight;
+      box-shadow: none;
+    }
+    .filter-btn[aria-pressed="true"] {
+      border-color: Highlight;
+    }
+    .install-copy-btn {
+      border: 1px solid ButtonText;
+    }
   }
 
   /* Reduced motion */
@@ -96,11 +125,13 @@
 
   /* Header */
   header {
-    padding: 32px 40px 0;
+    padding: 32px clamp(20px, 4vw, 40px) 0;
     position: sticky;
     top: 0;
+    background: var(--bg);
     background: color-mix(in srgb, var(--bg) 90%, transparent);
-    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
     z-index: 100;
   }
 
@@ -121,9 +152,9 @@
 
   header h1 {
     font-family: var(--font-display);
-    font-size: 28px;
+    font-size: clamp(26px, 3.5vw, 34px);
     font-weight: 700;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.6px;
     line-height: 1.1;
   }
 
@@ -131,7 +162,7 @@
     color: var(--text-muted);
     font-weight: 500;
     font-size: 15px;
-    margin-left: 2px;
+    margin-inline-start: 2px;
   }
 
   .version-badge {
@@ -156,7 +187,7 @@
 
   .search-wrap svg {
     position: absolute;
-    left: 12px;
+    inset-inline-start: 12px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
@@ -165,14 +196,15 @@
 
   .search-input {
     width: 100%;
-    padding: 8px 12px 8px 36px;
+    padding: 10px 40px 10px 36px;
+    min-height: 44px;
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text);
-    font-size: 13px;
+    font-size: 14px;
     outline: none;
-    transition: border-color 0.15s var(--ease-out-quart);
+    transition: border-color var(--duration-fast) var(--ease-out-quart);
   }
 
   .search-input::placeholder { color: var(--text-muted); }
@@ -182,17 +214,19 @@
   .stats-line {
     font-size: 13px;
     color: var(--text-muted);
-    padding: 16px 40px 0;
+    padding: 16px clamp(20px, 4vw, 40px) 0;
     display: flex;
     align-items: center;
     gap: 6px;
+    flex-wrap: wrap;
     animation: fade-up 0.3s var(--ease-out-quart) both;
   }
 
   .stats-line .stat-value {
-    color: var(--text-dim);
-    font-weight: 600;
+    color: var(--text);
+    font-weight: 700;
     font-family: var(--font-display);
+    font-size: 14px;
   }
 
   .stats-line .stat-sep {
@@ -201,11 +235,24 @@
     user-select: none;
   }
 
+  /* Interactive controls — shared base */
+  :is(.filter-btn, .install-copy-btn, .empty-state-reset, .theme-toggle) {
+    cursor: pointer;
+  }
+
+  :is(.filter-btn, .install-copy-btn, .empty-state-reset) {
+    font-family: inherit;
+  }
+
+  :is(.filter-btn, .install-copy-btn, .empty-state-reset, .theme-toggle):focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+
   /* Filters */
   .filters {
     display: flex;
     gap: 6px;
-    padding: 20px 40px 0;
+    padding: 20px clamp(20px, 4vw, 40px) 0;
     flex-wrap: wrap;
     align-items: center;
   }
@@ -219,53 +266,58 @@
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-right: 6px;
-    font-weight: 500;
+    margin-inline-end: 6px;
+    font-weight: 600;
   }
 
   .filter-btn {
-    padding: 5px 12px;
-    min-height: 32px;
+    padding: 8px 14px;
+    min-height: 44px;
     border-radius: 6px;
     border: 1px solid transparent;
     background: transparent;
     color: var(--text-muted);
     font-size: 12px;
-    cursor: pointer;
-    transition: color 0.15s var(--ease-out-quart), background 0.15s var(--ease-out-quart), border-color 0.15s var(--ease-out-quart);
-    font-family: inherit;
+    transition: color var(--duration-fast) var(--ease-out-quart), background var(--duration-fast) var(--ease-out-quart), border-color var(--duration-fast) var(--ease-out-quart);
   }
 
   .filter-btn:hover {
     color: var(--text-dim);
-    background: var(--tag-bg);
+    background: var(--bg-surface);
   }
 
   .filter-btn[aria-pressed="true"] {
-    border-color: var(--border);
-    background: var(--bg-surface);
+    border-color: var(--accent);
+    background: var(--accent-subtle);
     color: var(--text);
     font-weight: 500;
   }
 
-  .filter-btn:focus-visible {
-    box-shadow: var(--focus-ring);
-  }
-
   /* Main grid */
   main {
-    padding: 28px 40px 64px;
+    padding: 28px clamp(20px, 4vw, 40px) 64px;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(460px, 100%), 1fr));
     gap: 12px;
+    container-type: inline-size;
+    container-name: main-grid;
   }
 
-  /* Plugin card — minimal, border only on interaction */
+  @container main-grid (max-width: 500px) {
+    .plugin-card .card-toggle { padding: 16px; }
+    .plugin-card .detail-inner { padding: 0 16px 16px; }
+    .plugin-card .card-install-bar { padding: 0 16px 12px; }
+  }
+
+  /* Plugin card — minimal, accent left border reveals on interaction */
   .plugin-card {
+    --card-accent: var(--accent);
     background: var(--bg-card);
     border: 1px solid transparent;
     border-radius: var(--radius);
-    transition: border-color 0.15s var(--ease-out-quart), background 0.15s var(--ease-out-quart);
+    border-inline-start: 3px solid transparent;
+    contain: layout style;
+    transition: border-color var(--duration-fast) var(--ease-out-quart), border-inline-start-color 0.25s var(--ease-out-expo), background var(--duration-fast) var(--ease-out-quart);
     animation: fade-up 0.3s var(--ease-out-quart) both;
   }
 
@@ -276,11 +328,13 @@
 
   .plugin-card:hover {
     border-color: var(--border);
+    border-inline-start-color: var(--card-accent);
     background: var(--bg-card-hover);
   }
 
   .plugin-card.expanded {
     border-color: var(--border);
+    border-inline-start-color: var(--card-accent);
   }
 
   .card-toggle {
@@ -318,25 +372,42 @@
   }
 
   .plugin-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     flex-shrink: 0;
     font-family: var(--font-mono);
-    background: var(--tag-bg);
+    background: var(--bg-surface);
     color: var(--text-dim);
+    overflow: hidden;
+    line-height: 1;
+  }
+
+  /* Per-category icon identity */
+  .plugin-icon.icon-typescript {
+    background: rgba(124, 106, 239, 0.14);
+    color: var(--accent);
+  }
+  .plugin-icon.icon-documentation {
+    background: var(--tag-hook-bg);
+    color: var(--tag-hook-text);
+  }
+  [data-theme="light"] .plugin-icon.icon-typescript {
+    background: rgba(99, 85, 192, 0.12);
   }
 
   .card-name {
     font-family: var(--font-display);
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: -0.2px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 
   .card-version {
@@ -428,22 +499,52 @@
     letter-spacing: 0.6px;
     color: var(--text-muted);
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
+  .detail-section-title::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .detail-section-title.section-skills { color: var(--tag-skill-text); }
+  .detail-section-title.section-skills::before { background: var(--tag-skill-text); }
+  .detail-section-title.section-agents { color: var(--tag-agent-text); }
+  .detail-section-title.section-agents::before { background: var(--tag-agent-text); }
+  .detail-section-title.section-hooks { color: var(--tag-hook-text); }
+  .detail-section-title.section-hooks::before { background: var(--tag-hook-text); }
+  .detail-section-title.section-commands { color: var(--tag-command-text); }
+  .detail-section-title.section-commands::before { background: var(--tag-command-text); }
 
-  .detail-item {
+  :is(.detail-item, .hook-item) {
     display: flex;
     flex-direction: column;
-    gap: 2px;
     padding: 10px 14px;
     background: var(--bg-surface);
     border-radius: var(--radius-sm);
+  }
+
+  .detail-item {
+    --section-color: var(--text-muted);
+    gap: 2px;
     border: 1px solid transparent;
-    transition: border-color 0.15s var(--ease-out-quart);
+    border-inline-start: 2px solid transparent;
+    transition: border-color var(--duration-fast) var(--ease-out-quart), border-inline-start-color 0.2s var(--ease-out-quart);
   }
 
   .detail-item:hover {
     border-color: var(--border);
+    border-inline-start-color: var(--section-color);
   }
+
+  /* Inherit section color for detail item accents */
+  .section-skills ~ .detail-item { --section-color: var(--tag-skill-text); }
+  .section-agents ~ .detail-item { --section-color: var(--tag-agent-text); }
+  .section-commands ~ .detail-item { --section-color: var(--tag-command-text); }
 
   .detail-item-header {
     display: flex;
@@ -483,8 +584,10 @@
     gap: 4px;
     background: none;
     border: none;
-    padding: 2px 0;
-    margin-top: 2px;
+    padding: 6px 8px;
+    margin: 2px -8px 0;
+    border-radius: var(--radius-sm);
+    min-height: 36px;
   }
 
   .detail-item-command:hover {
@@ -493,7 +596,6 @@
 
   .detail-item-command:focus-visible {
     box-shadow: var(--focus-ring);
-    border-radius: 2px;
   }
 
   .copy-feedback {
@@ -510,12 +612,12 @@
   }
 
   .hook-item {
-    display: flex;
-    flex-direction: column;
     gap: 4px;
-    padding: 10px 14px;
-    background: var(--bg-surface);
-    border-radius: var(--radius-sm);
+    border-inline-start: 2px solid transparent;
+    transition: border-inline-start-color 0.2s var(--ease-out-quart);
+  }
+  .hook-item:hover {
+    border-inline-start-color: var(--tag-hook-text);
   }
 
   .hook-event {
@@ -528,42 +630,53 @@
   .hook-desc {
     font-size: 12px;
     color: var(--text-muted);
-    padding-left: 2px;
+    padding-inline-start: 2px;
   }
 
   /* Install section */
   .install-section {
-    padding: 14px 16px;
-    background: var(--bg-surface);
-    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+    background: var(--accent-subtle);
+    border: 1px solid rgba(124, 106, 239, 0.12);
+    border-radius: var(--radius);
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
   }
+  [data-theme="light"] .install-section {
+    background: rgba(99, 85, 192, 0.06);
+    border-color: rgba(99, 85, 192, 0.1);
+  }
+
+  @container main-grid (max-width: 380px) {
+    .install-section {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .install-cmd { white-space: normal; word-break: break-all; }
+  }
 
   .install-cmd {
     font-size: 12px;
     font-family: var(--font-mono);
-    color: var(--text-dim);
+    color: var(--text);
     white-space: nowrap;
     overflow-x: auto;
     min-width: 0;
   }
 
   .install-copy-btn {
-    padding: 6px 14px;
-    min-height: 32px;
+    padding: 10px 16px;
+    min-height: 44px;
     background: var(--accent);
-    color: #f5f5f7;
+    color: var(--text-on-accent);
     border: none;
     border-radius: var(--radius-sm);
     font-size: 11px;
     font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
     white-space: nowrap;
-    transition: background 0.15s var(--ease-out-quart), transform 0.1s var(--ease-out-quart);
+    transition: background var(--duration-fast) var(--ease-out-quart), transform 0.1s var(--ease-out-quart);
     flex-shrink: 0;
   }
 
@@ -573,10 +686,6 @@
 
   .install-copy-btn:active {
     transform: scale(0.96);
-  }
-
-  .install-copy-btn:focus-visible {
-    box-shadow: var(--focus-ring);
   }
 
   /* Empty state */
@@ -589,10 +698,11 @@
 
   .empty-state h3 {
     font-family: var(--font-display);
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 20px;
+    font-weight: 700;
     margin-bottom: 6px;
-    color: var(--text-dim);
+    color: var(--text);
+    letter-spacing: -0.3px;
   }
 
   .empty-state p {
@@ -607,9 +717,7 @@
     padding: 6px 14px;
     border-radius: var(--radius-sm);
     font-size: 12px;
-    cursor: pointer;
-    font-family: inherit;
-    transition: border-color 0.15s var(--ease-out-quart), color 0.15s var(--ease-out-quart), transform 0.1s var(--ease-out-quart);
+    transition: border-color var(--duration-fast) var(--ease-out-quart), color var(--duration-fast) var(--ease-out-quart), transform 0.1s var(--ease-out-quart);
   }
 
   .empty-state-reset:hover {
@@ -634,24 +742,15 @@
     border: 0;
   }
 
-  /* Responsive */
+  /* Responsive — viewport queries for layout shifts only */
   @media (max-width: 900px) {
-    main {
-      grid-template-columns: 1fr;
-      padding: 20px 20px 64px;
-    }
-    header { padding: 24px 20px 0; }
     .header-top { flex-wrap: wrap; }
     .search-wrap { width: 100%; order: 3; }
-    .stats-line { padding: 12px 20px 0; }
-    .filters { padding: 16px 20px 0; }
   }
 
   @media (max-width: 600px) {
-    header h1 { font-size: 22px; }
+    header { padding-top: 24px; }
     header h1 span { font-size: 13px; }
-    .card-toggle { padding: 16px; }
-    .detail-inner { padding: 0 16px 16px; }
   }
 
   /* Scrollbar — Webkit + Firefox */
@@ -666,17 +765,16 @@
 
   /* Theme toggle */
   .theme-toggle {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
     border: 1px solid var(--border);
     background: transparent;
     color: var(--text-muted);
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: border-color 0.15s var(--ease-out-quart), color 0.15s var(--ease-out-quart), transform 0.1s var(--ease-out-quart);
+    transition: border-color var(--duration-fast) var(--ease-out-quart), color var(--duration-fast) var(--ease-out-quart), transform 0.1s var(--ease-out-quart);
     flex-shrink: 0;
   }
 
@@ -689,15 +787,195 @@
     transform: scale(0.92);
   }
 
-  .theme-toggle:focus-visible {
-    box-shadow: var(--focus-ring);
-  }
-
   /* Theme icon visibility via CSS */
   [data-theme="dark"] #icon-sun,
   [data-theme="light"] #icon-moon { display: none; }
   [data-theme="dark"] #icon-moon,
   [data-theme="light"] #icon-sun { display: block; }
+
+  /* Theme toggle spin animation */
+  @keyframes spin-icon {
+    to { transform: rotate(360deg); }
+  }
+  .theme-toggle.spinning .theme-icon {
+    animation: spin-icon 0.45s var(--ease-out-quart) both;
+  }
+
+  /* Install button success state */
+  .install-copy-btn.success {
+    background: transparent;
+    color: var(--tag-skill-text);
+    box-shadow: inset 0 0 0 1px var(--tag-skill-text);
+  }
+
+  /* Search ⌘K hint */
+  .search-kbd {
+    position: absolute;
+    inset-inline-end: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    pointer-events: none;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    line-height: 1.6;
+    transition: opacity 0.2s var(--ease-out-quart);
+    user-select: none;
+  }
+  .search-input:focus ~ .search-kbd,
+  .search-input:not(:placeholder-shown) ~ .search-kbd { opacity: 0; }
+  @media (pointer: coarse) { .search-kbd { display: none; } }
+  /* Header subtitle */
+  .header-subtitle {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    max-width: 540px;
+    padding-bottom: 12px;
+  }
+
+  /* How it works — first-visit onboarding */
+  .how-it-works {
+    padding: 20px clamp(20px, 4vw, 40px) 0;
+    animation: fade-up 0.3s var(--ease-out-quart) both;
+    container-type: inline-size;
+    container-name: how-it-works;
+  }
+
+  .how-it-works-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .how-it-works-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .how-it-works-dismiss {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 12px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--duration-fast) var(--ease-out-quart);
+  }
+
+  .how-it-works-dismiss:hover {
+    color: var(--text-dim);
+  }
+
+  .how-it-works-dismiss:active {
+    transform: scale(0.92);
+  }
+
+  .how-it-works-dismiss:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+
+  .how-it-works-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  @container how-it-works (max-width: 600px) {
+    .how-it-works-grid { grid-template-columns: 1fr; }
+  }
+
+  .how-it-works-card {
+    --hiw-accent: var(--text-muted);
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    border-top: 2px solid var(--hiw-accent);
+  }
+  .how-it-works-card:nth-child(1) { --hiw-accent: var(--tag-hook-text); }
+  .how-it-works-card:nth-child(2) { --hiw-accent: var(--tag-agent-text); }
+  .how-it-works-card:nth-child(3) { --hiw-accent: var(--tag-skill-text); }
+
+  .how-it-works-card-label {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    margin-bottom: 4px;
+  }
+
+  .how-it-works-card-label.hook { color: var(--tag-hook-text); }
+  .how-it-works-card-label.agent { color: var(--tag-agent-text); }
+  .how-it-works-card-label.skill { color: var(--tag-skill-text); }
+
+  .how-it-works-card-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .how-it-works[hidden] {
+    display: none;
+  }
+
+  /* Quick install bar on collapsed cards */
+  .card-install-bar {
+    padding: 0 24px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-install-bar code {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .card-install-quick {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    min-height: 36px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background var(--duration-fast) var(--ease-out-quart);
+  }
+
+  .card-install-quick:hover {
+    background: var(--accent-subtle);
+  }
+
+  .card-install-quick:active {
+    transform: scale(0.96);
+  }
+
+  .card-install-quick:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+
+  .plugin-card.expanded .card-install-bar {
+    display: none;
+  }
 </style>
 </head>
 <body>
@@ -712,16 +990,20 @@
       <div class="search-wrap">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input class="search-input" type="search" placeholder="Search plugins, skills, agents..." id="search" autocomplete="off" aria-label="Search plugins, skills, agents">
+        <kbd class="search-kbd" aria-hidden="true">⌘K</kbd>
       </div>
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode" title="Toggle theme">
-        <svg id="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        <svg id="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <span class="theme-icon" aria-hidden="true">
+          <svg id="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg id="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </span>
       </button>
     </div>
   </div>
+  <p class="header-subtitle">Claude Code plugins that enforce code standards through hooks, agents, and on-demand reviews.</p>
 </header>
 
-<div class="stats-line" id="stats-bar" aria-label="Marketplace statistics" role="status"></div>
+<div class="stats-line" id="stats-bar" aria-label="Marketplace statistics"></div>
 
 <nav class="filters" id="filters" aria-label="Filter plugins by component type">
   <span class="filter-label" id="filter-group-label">Show</span>
@@ -733,6 +1015,29 @@
     <button class="filter-btn" aria-pressed="false" data-filter="component" data-value="commands">Commands</button>
   </div>
 </nav>
+
+<section class="how-it-works" id="how-it-works" aria-label="How plugins work">
+  <div class="how-it-works-header">
+    <span class="how-it-works-title">How it works</span>
+    <button class="how-it-works-dismiss" id="dismiss-how-it-works" aria-label="Dismiss" title="Dismiss">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="how-it-works-grid">
+    <div class="how-it-works-card">
+      <div class="how-it-works-card-label hook">Hooks</div>
+      <div class="how-it-works-card-desc">Real-time guards that block violations as you code — no any, no enum, no export default.</div>
+    </div>
+    <div class="how-it-works-card">
+      <div class="how-it-works-card-label agent">Agent</div>
+      <div class="how-it-works-card-desc">On-demand /ts-review dispatches a Sonnet reviewer for a structured report with severity levels.</div>
+    </div>
+    <div class="how-it-works-card">
+      <div class="how-it-works-card-label skill">Skill</div>
+      <div class="how-it-works-card-desc">Reference conventions Claude consults automatically when writing or reviewing TypeScript.</div>
+    </div>
+  </div>
+</section>
 
 <main id="main"></main>
 
@@ -749,6 +1054,7 @@ const PLUGINS = [
     "category": "development",
     "icon": "TS",
     "iconClass": "typescript",
+    "accentColor": "#7c6aef",
     "source": "./",
     "skills": [
       {
@@ -802,6 +1108,7 @@ const PLUGINS = [
     "category": "development",
     "icon": "/**",
     "iconClass": "documentation",
+    "accentColor": "#c8a040",
     "source": "./jsdoc-standards",
     "skills": [
       {
@@ -835,10 +1142,10 @@ const PLUGINS = [
 ];
 
 // HTML escaping to prevent XSS
+const _escEl = document.createElement('span');
 function esc(str) {
-  const el = document.createElement('span');
-  el.textContent = str;
-  return el.innerHTML;
+  _escEl.textContent = str;
+  return _escEl.innerHTML;
 }
 
 // Screen reader announcements
@@ -902,21 +1209,40 @@ function getFilteredPlugins() {
   return PLUGINS.filter(p => matchesSearch(p) && matchesComponent(p));
 }
 
-function copyText(text, feedbackEl) {
-  navigator.clipboard.writeText(text).then(() => {
-    announce('Copied to clipboard');
-    if (feedbackEl) {
-      feedbackEl.classList.add('show');
-      setTimeout(() => feedbackEl.classList.remove('show'), 1200);
-    }
-  });
+function safeCopy(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text);
+  }
+  // Fallback for non-HTTPS or older browsers
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;left:-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) { /* best effort */ }
+  document.body.removeChild(ta);
+  return Promise.resolve();
 }
 
-function handleCopyInstall(btn, text) {
-  navigator.clipboard.writeText(text).then(() => {
-    announce('Install command copied to clipboard');
-    btn.textContent = 'Copied!';
-    setTimeout(() => { btn.textContent = 'Copy'; }, 1200);
+function handleCopy(text, btn, opts = {}) {
+  safeCopy(text).then(() => {
+    announce(opts.announce || 'Copied to clipboard');
+    if (opts.feedbackEl) {
+      opts.feedbackEl.classList.add('show');
+      setTimeout(() => opts.feedbackEl.classList.remove('show'), 1200);
+    } else if (btn) {
+      const original = btn.textContent;
+      if (btn.classList.contains('install-copy-btn')) {
+        btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Copied';
+        btn.classList.add('success');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('success'); }, 1800);
+      } else {
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = original; }, 1200);
+      }
+    }
+  }).catch(() => {
+    announce('Could not copy — try selecting the text manually');
   });
 }
 
@@ -942,7 +1268,10 @@ function renderPlugins() {
     const tags = [];
     if (p.skills.length) tags.push(`<span class="tag skill">${p.skills.length} skill${p.skills.length > 1 ? 's' : ''}</span>`);
     if (p.agents.length) tags.push(`<span class="tag agent">${p.agents.length} agent${p.agents.length > 1 ? 's' : ''}</span>`);
-    if (p.hooks.length) tags.push(`<span class="tag hook">${p.hooks.reduce((n, h) => n + h.rules.length, 0)} hook rule${p.hooks.reduce((n, h) => n + h.rules.length, 0) > 1 ? 's' : ''}</span>`);
+    if (p.hooks.length) {
+      const hookCount = p.hooks.reduce((n, h) => n + h.rules.length, 0);
+      tags.push(`<span class="tag hook">${hookCount} hook rule${hookCount > 1 ? 's' : ''}</span>`);
+    }
     if (p.commands && p.commands.length) tags.push(`<span class="tag command">${p.commands.length} command${p.commands.length > 1 ? 's' : ''}</span>`);
 
     let detailContent = '';
@@ -951,7 +1280,7 @@ function renderPlugins() {
     if (p.skills.length) {
       sections += `
         <div class="detail-section">
-          <div class="detail-section-title">Skills</div>
+          <div class="detail-section-title section-skills">Skills</div>
           ${p.skills.map(s => `
             <div class="detail-item">
               <div class="detail-item-header">
@@ -959,7 +1288,7 @@ function renderPlugins() {
                 ${s.version !== '0.0.0' ? `<span class="detail-item-version">v${esc(s.version)}</span>` : ''}
               </div>
               <div class="detail-item-desc">${esc(s.description)}</div>
-              ${s.command ? `<button class="detail-item-command" data-copy="${esc(s.command)}">${esc(s.command)} <span class="copy-feedback" aria-hidden="true">Copied!</span></button>` : ''}
+              ${s.command ? `<button class="detail-item-command" data-copy="${esc(s.command)}">${esc(s.command)} <span class="copy-feedback" aria-hidden="true">✓ copied</span></button>` : ''}
             </div>
           `).join('')}
         </div>
@@ -969,7 +1298,7 @@ function renderPlugins() {
     if (p.agents.length) {
       sections += `
         <div class="detail-section">
-          <div class="detail-section-title">Agents</div>
+          <div class="detail-section-title section-agents">Agents</div>
           ${p.agents.map(a => `
             <div class="detail-item">
               <div class="detail-item-header">
@@ -985,7 +1314,7 @@ function renderPlugins() {
     if (p.hooks.length) {
       sections += `
         <div class="detail-section">
-          <div class="detail-section-title">Hooks</div>
+          <div class="detail-section-title section-hooks">Hooks</div>
           ${p.hooks.map(h => `
             <div class="hook-item">
               <span class="hook-event">${esc(h.event)}</span>
@@ -999,7 +1328,7 @@ function renderPlugins() {
     if (p.commands && p.commands.length) {
       sections += `
         <div class="detail-section">
-          <div class="detail-section-title">Commands</div>
+          <div class="detail-section-title section-commands">Commands</div>
           ${p.commands.map(c => `
             <div class="detail-item">
               <div class="detail-item-header">
@@ -1023,11 +1352,11 @@ function renderPlugins() {
     detailContent = `<div class="card-detail-inner-wrap"><div class="detail-inner">${sections}</div></div>`;
 
     return `
-      <article class="plugin-card ${isExpanded ? 'expanded' : ''}" data-id="${esc(p.id)}">
+      <article class="plugin-card ${isExpanded ? 'expanded' : ''}" data-id="${esc(p.id)}" style="--card-accent: ${esc(p.accentColor || '#7c6aef')}">
         <button class="card-toggle" aria-expanded="${isExpanded}" aria-controls="${detailId}" data-card-id="${esc(p.id)}">
           <div class="card-top">
             <div class="card-title-row">
-              <div class="plugin-icon" aria-hidden="true">${esc(p.icon)}</div>
+              <div class="plugin-icon icon-${esc(p.iconClass)}" aria-hidden="true">${esc(p.icon)}</div>
               <span class="card-name">${esc(p.name)}</span>
               <span class="card-version">v${esc(p.version)}</span>
             </div>
@@ -1036,6 +1365,10 @@ function renderPlugins() {
           <div class="card-desc">${esc(p.description)}</div>
           <div class="card-tags">${tags.join('')}</div>
         </button>
+        <div class="card-install-bar">
+          <code>${esc(installCmd)}</code>
+          <button class="card-install-quick" data-install="${esc(installCmd)}">Copy</button>
+        </div>
         <div class="card-detail" id="${detailId}" role="region" aria-label="${esc(p.name)} details">${detailContent}</div>
       </article>
     `;
@@ -1043,14 +1376,19 @@ function renderPlugins() {
 }
 
 function toggleCard(id) {
-  if (state.expanded.has(id)) {
-    state.expanded.delete(id);
-    announce('Collapsed');
+  const isExpanding = !state.expanded.has(id);
+  if (isExpanding) { state.expanded.add(id); } else { state.expanded.delete(id); }
+
+  // Surgical DOM update instead of full re-render
+  const card = document.querySelector(`.plugin-card[data-id="${id}"]`);
+  if (card) {
+    card.classList.toggle('expanded', isExpanding);
+    const toggle = card.querySelector('.card-toggle');
+    if (toggle) toggle.setAttribute('aria-expanded', String(isExpanding));
+    announce(isExpanding ? 'Expanded' : 'Collapsed');
   } else {
-    state.expanded.add(id);
-    announce('Expanded');
+    renderPlugins();
   }
-  renderPlugins();
 }
 
 function resetFilters() {
@@ -1092,14 +1430,21 @@ document.getElementById('main').addEventListener('click', (e) => {
   const copyBtn = e.target.closest('.detail-item-command');
   if (copyBtn) {
     e.stopPropagation();
-    copyText(copyBtn.dataset.copy, copyBtn.querySelector('.copy-feedback'));
+    handleCopy(copyBtn.dataset.copy, copyBtn, { feedbackEl: copyBtn.querySelector('.copy-feedback') });
+    return;
+  }
+
+  const quickInstallBtn = e.target.closest('.card-install-quick');
+  if (quickInstallBtn) {
+    e.stopPropagation();
+    handleCopy(quickInstallBtn.dataset.install, quickInstallBtn, { announce: 'Install command copied to clipboard' });
     return;
   }
 
   const installBtn = e.target.closest('.install-copy-btn');
   if (installBtn) {
     e.stopPropagation();
-    handleCopyInstall(installBtn, installBtn.dataset.install);
+    handleCopy(installBtn.dataset.install, installBtn, { announce: 'Install command copied to clipboard' });
     return;
   }
 });
@@ -1122,32 +1467,80 @@ document.getElementById('filters').addEventListener('click', (e) => {
   announce(`Filter: ${value}`);
 });
 
-// Keyboard shortcut
+// Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
     e.preventDefault();
     document.getElementById('search').focus();
   }
+  // Escape collapses all expanded cards
+  if (e.key === 'Escape' && state.expanded.size > 0 && document.activeElement !== document.getElementById('search')) {
+    state.expanded.clear();
+    renderPlugins();
+    announce('All cards collapsed');
+  }
 });
 
 // Theme toggle
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-}
-
-const savedTheme = localStorage.getItem('marketplace-theme') || 'dark';
-applyTheme(savedTheme);
-
 document.getElementById('theme-toggle').addEventListener('click', () => {
   const current = document.documentElement.getAttribute('data-theme') || 'dark';
   const next = current === 'dark' ? 'light' : 'dark';
-  applyTheme(next);
-  localStorage.setItem('marketplace-theme', next);
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('marketplace-theme', next); } catch (e) { /* private browsing */ }
   announce(`${next} theme`);
+
+  const btn = document.getElementById('theme-toggle');
+  btn.classList.remove('spinning');
+  void btn.offsetWidth; // reflow to restart animation
+  btn.classList.add('spinning');
+  btn.addEventListener('animationend', () => btn.classList.remove('spinning'), { once: true });
 });
+
+// How it works — first-visit onboarding
+(function initOnboarding() {
+  const section = document.getElementById('how-it-works');
+  try {
+    if (localStorage.getItem('marketplace-onboarding-seen')) {
+      section.hidden = true;
+      return;
+    }
+  } catch (e) { /* private browsing — show onboarding */ }
+  document.getElementById('dismiss-how-it-works').addEventListener('click', () => {
+    section.hidden = true;
+    try { localStorage.setItem('marketplace-onboarding-seen', '1'); } catch (e) { /* best effort */ }
+    announce('How it works dismissed');
+  });
+})();
 
 // Initial render
 render();
+
+// Animate stat numbers on first load
+(function animateStats() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('#stats-bar .stat-value').forEach(el => {
+    const target = parseInt(el.textContent, 10);
+    if (!target) return;
+    el.textContent = '0';
+    const start = performance.now();
+    const duration = 600;
+    const tick = (now) => {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3); // ease-out-cubic
+      el.textContent = Math.round(eased * target);
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+})();
+
+// Console easter egg for the curious developer
+console.log(
+  '%c Plugin Marketplace %c v1.0.0 \n%c👋 Hello, developer. Snooping around? Nice instinct.\n   Try → /typescript-rules:typescript-conventions\n   or   → /jsdoc-standards:jsdoc-review',
+  'background:#7c6aef;color:#fff;padding:2px 8px;border-radius:4px 0 0 4px;font-weight:600',
+  'background:#2a2824;color:#9b9990;padding:2px 8px;border-radius:0 4px 4px 0;font-family:monospace',
+  'color:#7a7870;font-size:11px;line-height:1.8'
+);
 </script>
 </body>
 </html>
