@@ -3,7 +3,14 @@ name: Deploy Marketplace to GitHub Pages
 on:
   push:
     branches: [main]
-    paths: [marketplace.html]
+    paths:
+      - marketplace.html
+      - scripts/build-marketplace.sh
+      - .claude-plugin/marketplace.json
+      - '**/skills/**/SKILL.md'
+      - '**/agents/*.md'
+      - '**/commands/*.md'
+      - '**/hooks/hooks.json'
   workflow_dispatch:
 
 permissions:
@@ -22,6 +29,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Build marketplace data
+        run: bash scripts/build-marketplace.sh
 
       - name: Prepare site
         run: |
