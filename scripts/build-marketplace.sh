@@ -264,3 +264,106 @@ discover_hooks() {
 
   echo "$result"
 }
+
+# ── Main ─────────────────────────────────────────────────────────────
+
+main() {
+  if [[ ! -f "$MARKETPLACE_JSON" ]]; then
+    echo "ERROR: marketplace.json not found at $MARKETPLACE_JSON" >&2
+    exit 1
+  fi
+
+  if [[ ! -f "$MARKETPLACE_HTML" ]]; then
+    echo "ERROR: marketplace.html not found at $MARKETPLACE_HTML" >&2
+    exit 1
+  fi
+
+  local plugin_count
+  plugin_count=$(jq '.plugins | length' "$MARKETPLACE_JSON")
+  local plugins_array="[]"
+
+  for (( idx=0; idx<plugin_count; idx++ )); do
+    # Read fields from marketplace.json
+    local p_name p_displayName p_version p_source p_category p_description
+    local p_longDescription p_icon p_iconClass p_accentColor
+    p_name=$(jq -r ".plugins[$idx].name" "$MARKETPLACE_JSON")
+    p_displayName=$(jq -r ".plugins[$idx].displayName // empty" "$MARKETPLACE_JSON")
+    p_version=$(jq -r ".plugins[$idx].version" "$MARKETPLACE_JSON")
+    p_source=$(jq -r ".plugins[$idx].source" "$MARKETPLACE_JSON")
+    p_category=$(jq -r ".plugins[$idx].category" "$MARKETPLACE_JSON")
+    p_description=$(jq -r ".plugins[$idx].description" "$MARKETPLACE_JSON")
+    p_longDescription=$(jq -r ".plugins[$idx].longDescription // empty" "$MARKETPLACE_JSON")
+    p_icon=$(jq -r ".plugins[$idx].icon // empty" "$MARKETPLACE_JSON")
+    p_iconClass=$(jq -r ".plugins[$idx].iconClass // empty" "$MARKETPLACE_JSON")
+    p_accentColor=$(jq -r ".plugins[$idx].accentColor // empty" "$MARKETPLACE_JSON")
+
+    # Validate required field
+    if [[ -z "$p_displayName" ]]; then
+      echo "ERROR: displayName is required for plugin '$p_name'" >&2
+      exit 1
+    fi
+
+    # Resolve plugin root directory
+    local plugin_root
+    if [[ "$p_source" == "./" || "$p_source" == "." ]]; then
+      plugin_root="$REPO_ROOT"
+    else
+      plugin_root="$REPO_ROOT/${p_source#./}"
+    fi
+
+    if [[ ! -d "$plugin_root" ]]; then
+      echo "WARN: plugin directory not found: $plugin_root (skipping $p_name)" >&2
+      continue
+    fi
+
+    # Use longDescription if available, else description
+    local display_desc="${p_longDescription:-$p_description}"
+
+    # Discover components
+    local skills agents commands hooks
+    skills=$(discover_skills "$plugin_root" "$p_name")
+    agents=$(discover_agents "$plugin_root")
+    commands=$(discover_commands "$plugin_root" "$p_name")
+    hooks=$(discover_hooks "$plugin_root")
+
+    # Build plugin JSON object
+    local plugin_obj
+    plugin_obj=$(jq -n \
+      --arg id "$p_name" \
+      --arg name "$p_displayName" \
+      --arg version "$p_version" \
+      --arg description "$display_desc" \
+      --arg category "$p_category" \
+      --arg icon "${p_icon:-}" \
+      --arg iconClass "${p_iconClass:-}" \
+      --arg accentColor "${p_accentColor:-#7c6aef}" \
+      --arg source "$p_source" \
+      --argjson skills "$skills" \
+      --argjson agents "$agents" \
+      --argjson hooks "$hooks" \
+      --argjson commands "$commands" \
+      '{
+        id: $id,
+        name: $name,
+        version: $version,
+        description: $description,
+        category: $category,
+        icon: $icon,
+        iconClass: $iconClass,
+        accentColor: $accentColor,
+        source: $source,
+        skills: $skills,
+        agents: $agents,
+        hooks: $hooks,
+        commands: $commands
+      }')
+
+    plugins_array=$(echo "$plugins_array" | jq --argjson p "$plugin_obj" '. + [$p]')
+  done
+
+  echo "$plugins_array"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  main | jq .
+fi
