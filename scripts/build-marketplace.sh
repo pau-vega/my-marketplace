@@ -364,6 +364,54 @@ main() {
   echo "$plugins_array"
 }
 
+# ── Injection ────────────────────────────────────────────────────────
+
+inject_plugins() {
+  local json_array="$1"
+
+  # Format the JSON for embedding: indent 2 spaces (matching the existing style)
+  # Remove the outer [ ] brackets so we inject just the array contents
+  local formatted
+  formatted=$(echo "$json_array" | jq '.' | sed '1d;$d' | sed 's/^/  /')
+
+  # Find the line numbers for injection
+  local start_line end_line
+  start_line=$(grep -n 'const PLUGINS = \[' "$MARKETPLACE_HTML" | head -1 | cut -d: -f1)
+
+  if [[ -z "$start_line" ]]; then
+    echo "ERROR: could not find 'const PLUGINS = [' in $MARKETPLACE_HTML" >&2
+    exit 1
+  fi
+
+  # Find the first ]; on its own line after start_line
+  end_line=$(tail -n +"$((start_line + 1))" "$MARKETPLACE_HTML" | grep -n '^];$' | head -1 | cut -d: -f1)
+
+  if [[ -z "$end_line" ]]; then
+    echo "ERROR: could not find closing '];' after PLUGINS declaration" >&2
+    exit 1
+  fi
+
+  # Adjust end_line to be absolute line number
+  end_line=$((start_line + end_line))
+
+  # Build the new file: head up to and including PLUGINS = [ line,
+  # then formatted JSON, then from ]; line onward
+  {
+    head -n "$start_line" "$MARKETPLACE_HTML"
+    echo "$formatted"
+    tail -n +"$end_line" "$MARKETPLACE_HTML"
+  } > "${MARKETPLACE_HTML}.tmp"
+
+  mv "${MARKETPLACE_HTML}.tmp" "$MARKETPLACE_HTML"
+
+  local plugin_count
+  plugin_count=$(echo "$json_array" | jq 'length')
+  echo "Injected $plugin_count plugins into marketplace.html" >&2
+}
+
+# ── Entry point ──────────────────────────────────────────────────────
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  main | jq .
+  plugins_json=$(main)
+  inject_plugins "$plugins_json"
 fi
