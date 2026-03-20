@@ -397,8 +397,15 @@
     background: var(--tag-hook-bg);
     color: var(--tag-hook-text);
   }
+  .plugin-icon.icon-workflow {
+    background: rgba(52, 180, 130, 0.14);
+    color: #34b482;
+  }
   [data-theme="light"] .plugin-icon.icon-typescript {
     background: rgba(99, 85, 192, 0.12);
+  }
+  [data-theme="light"] .plugin-icon.icon-workflow {
+    background: rgba(20, 140, 90, 0.12);
   }
 
   .card-name {
@@ -1045,100 +1052,153 @@
 <div id="live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
 <script>
+// AUTO-GENERATED: do not edit manually — run scripts/build-marketplace.sh
 const PLUGINS = [
-  {
-    "id": "typescript-rules",
-    "name": "TypeScript Rules",
-    "version": "1.0.0",
-    "description": "TypeScript coding conventions with automatic validation, review command, and reviewer agent. Enforces interface extends over &, discriminated unions, no enums, no any, no default exports, and import type usage.",
-    "category": "development",
-    "icon": "TS",
-    "iconClass": "typescript",
-    "accentColor": "#7c6aef",
-    "source": "./",
-    "skills": [
-      {
-        "name": "typescript-conventions",
-        "version": "0.0.0",
-        "description": "TypeScript coding conventions covering types & interfaces, functions & error handling, imports, and naming conventions",
-        "command": "/typescript-rules:typescript-conventions"
-      }
-    ],
-    "agents": [
-      {
-        "name": "ts-reviewer",
-        "description": "Reviews TypeScript code for rule compliance, suggests refactorings aligned with conventions, and detects bugs, logic issues, and opportunities for stricter typing"
-      }
-    ],
-    "hooks": [
-      {
-        "event": "PreToolUse (Bash)",
-        "rules": [
-          "Enforce pnpm package manager"
-        ]
-      },
-      {
-        "event": "PreToolUse (Write|Edit)",
-        "rules": [
-          "Block package.json edits",
-          "No enum usage",
-          "No export default",
-          "No any type"
-        ]
-      },
-      {
-        "event": "PreToolUse (Write|Edit) \u2014 Prompt",
-        "rules": [
-          "Validate .ts/.tsx files against six core TypeScript rules"
-        ]
-      }
-    ],
-    "commands": [
-      {
-        "name": "/typescript-rules:ts-review",
-        "description": "Run a full TypeScript code review against project conventions"
-      }
-    ]
-  },
-  {
-    "id": "jsdoc-standards",
-    "name": "JSDoc Standards",
-    "version": "0.1.0",
-    "description": "JSDoc documentation standards with three enforcement levels (Minimal, Standard, Strict), automatic warnings on missing docs, and on-demand review command.",
-    "category": "development",
-    "icon": "/**",
-    "iconClass": "documentation",
-    "accentColor": "#c8a040",
-    "source": "./jsdoc-standards",
-    "skills": [
-      {
-        "name": "jsdoc-conventions",
-        "version": "0.0.0",
-        "description": "TypeScript JSDoc documentation conventions with three enforcement levels (Minimal, Standard, Strict). Provides rules for tag usage, format, and level selection",
-        "command": "/jsdoc-standards:jsdoc-conventions"
-      }
-    ],
-    "agents": [
-      {
-        "name": "jsdoc-reviewer",
-        "description": "Reviews TypeScript code for JSDoc documentation compliance across three enforcement levels (Minimal, Standard, Strict)"
-      }
-    ],
-    "hooks": [
-      {
-        "event": "PreToolUse (Write|Edit)",
-        "rules": [
-          "Warn on missing JSDoc documentation"
-        ]
-      }
-    ],
-    "commands": [
-      {
-        "name": "/jsdoc-standards:jsdoc-review",
-        "description": "Review TypeScript files for JSDoc compliance at a specified enforcement level"
-      }
-    ]
-  }
+    {
+      "id": "typescript-rules",
+      "name": "TypeScript Rules",
+      "version": "1.0.0",
+      "description": "TypeScript coding conventions with automatic validation, review command, and reviewer agent. Enforces interface extends over &, discriminated unions, no enums, no any, no default exports, and import type usage.",
+      "category": "development",
+      "icon": "TS",
+      "iconClass": "typescript",
+      "accentColor": "#7c6aef",
+      "source": "./",
+      "skills": [
+        {
+          "name": "typescript-conventions",
+          "version": "0.0.0",
+          "description": "TypeScript coding conventions for any TS project. Covers types & interfaces (interface extends over &, discriminated unions, no enums), functions & error handling (Result types, no any, explicit return types), imports (import type, no default exports), and naming conventions. Use when writing or reviewing TypeScript code.",
+          "command": "/typescript-rules:typescript-conventions"
+        }
+      ],
+      "agents": [
+        {
+          "name": "ts-reviewer",
+          "description": "Reviews TypeScript code for rule compliance, suggests refactorings aligned with conventions (e.g. & to interface extends), and detects bugs, logic issues, and opportunities for stricter typing. Use when reviewing TypeScript code quality."
+        }
+      ],
+      "hooks": [
+        {
+          "event": "PreToolUse (Bash)",
+          "rules": [
+            "Enforce Pnpm"
+          ]
+        },
+        {
+          "event": "PreToolUse (Write|Edit)",
+          "rules": [
+            "No Package Json Edit",
+            "No Enum",
+            "No Export Default",
+            "No Any"
+          ]
+        },
+        {
+          "event": "PreToolUse (Write|Edit) — Prompt",
+          "rules": [
+            "Check if the target file is .ts or .tsx. If not, respond with 'approve'. If it..."
+          ]
+        }
+      ],
+      "commands": [
+        {
+          "name": "/typescript-rules:ts-review",
+          "description": "Run a full TypeScript code review against project conventions"
+        }
+      ]
+    },
+    {
+      "id": "jsdoc-standards",
+      "name": "JSDoc Standards",
+      "version": "0.1.0",
+      "description": "JSDoc documentation standards with three enforcement levels (Minimal, Standard, Strict), automatic warnings on missing docs, and on-demand review command.",
+      "category": "development",
+      "icon": "/**",
+      "iconClass": "documentation",
+      "accentColor": "#c8a040",
+      "source": "./jsdoc-standards",
+      "skills": [
+        {
+          "name": "jsdoc-conventions",
+          "version": "0.0.0",
+          "description": "TypeScript JSDoc documentation conventions with three enforcement levels (Minimal, Standard, Strict). This skill should be used when the user asks to \"add JSDoc\", \"document this code\", \"add documentation\", \"write JSDocs\", \"improve documentation\", \"set JSDoc level\", \"which JSDoc level\", or when applying JSDoc conventions to TypeScript code. Provides rules for tag usage, format, and level selection across any TypeScript project.",
+          "command": "/jsdoc-standards:jsdoc-conventions"
+        }
+      ],
+      "agents": [
+        {
+          "name": "jsdoc-reviewer",
+          "description": "Reviews TypeScript code for JSDoc documentation compliance across three enforcement levels (Minimal, Standard, Strict). Use this agent when reviewing JSDoc quality or auditing documentation coverage."
+        }
+      ],
+      "hooks": [
+        {
+          "event": "PreToolUse (Write|Edit)",
+          "rules": [
+            "Warn Missing Jsdoc"
+          ]
+        }
+      ],
+      "commands": [
+        {
+          "name": "/jsdoc-standards:jsdoc-review",
+          "description": "Review TypeScript files for JSDoc compliance at a specified enforcement level. This skill should be used when the user runs \"/jsdoc-review\", \"/jsdoc-review minimal\", \"/jsdoc-review standard\", or \"/jsdoc-review strict\"."
+        }
+      ]
+    },
+    {
+      "id": "workflow-toolkit",
+      "name": "Workflow Toolkit",
+      "version": "0.1.0",
+      "description": "A collection of developer workflow skills covering the full lifecycle from idea stress-testing to PRD writing, issue breakdown, TDD implementation, and codebase architecture improvement.",
+      "category": "development",
+      "icon": "WT",
+      "iconClass": "workflow",
+      "accentColor": "#34b482",
+      "source": "./workflow-toolkit",
+      "skills": [
+        {
+          "name": "create-workflow",
+          "version": "0.0.0",
+          "description": "This skill should be used when the user asks to \"show my workflow\", \"what skills are available\", \"start a workflow\", \"create-workflow\", \"show the development process\", or wants an overview of the available development workflow skills and when to use each one.",
+          "command": "/workflow-toolkit:create-workflow"
+        },
+        {
+          "name": "grill-me",
+          "version": "0.0.0",
+          "description": "This skill should be used when the user asks to \"grill me\", \"stress-test my plan\", \"challenge my design\", \"poke holes in this\", \"review my architecture\", \"play devil's advocate\", \"find the flaws\", \"what am I missing\", or wants critical feedback on a plan, design, or idea before implementation.",
+          "command": "/workflow-toolkit:grill-me"
+        },
+        {
+          "name": "improve-codebase-architecture",
+          "version": "0.0.0",
+          "description": "This skill should be used when the user asks to \"improve the architecture\", \"find refactoring opportunities\", \"deepen modules\", \"make the codebase more testable\", \"consolidate tightly-coupled modules\", \"review codebase architecture\", or wants to surface architectural friction and propose module-deepening refactors.",
+          "command": "/workflow-toolkit:improve-codebase-architecture"
+        },
+        {
+          "name": "prd-to-issues",
+          "version": "0.0.0",
+          "description": "This skill should be used when the user asks to \"break down a PRD\", \"convert PRD to issues\", \"create issues from a PRD\", \"split a PRD into tickets\", \"create implementation tickets\", or wants to turn a product requirements document into independently-grabbable GitHub issues.",
+          "command": "/workflow-toolkit:prd-to-issues"
+        },
+        {
+          "name": "tdd",
+          "version": "0.0.0",
+          "description": "This skill should be used when the user asks to \"use TDD\", \"write tests first\", \"red-green-refactor\", \"test-driven development\", \"build this with tests\", \"fix this bug with TDD\", or wants to implement features or fix bugs using a test-first approach.",
+          "command": "/workflow-toolkit:tdd"
+        },
+        {
+          "name": "write-a-prd",
+          "version": "0.0.0",
+          "description": "This skill should be used when the user asks to \"write a PRD\", \"create a product requirements document\", \"plan a new feature\", \"write requirements\", \"draft a spec\", \"spec out a feature\", \"define requirements\", or wants to plan and define what to build before building it.",
+          "command": "/workflow-toolkit:write-a-prd"
+        }
+      ],
+      "agents": [],
+      "hooks": [],
+      "commands": []
+    }
 ];
 
 // HTML escaping to prevent XSS

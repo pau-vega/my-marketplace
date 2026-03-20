@@ -1,32 +1,50 @@
 {
   "name": "my-marketplace",
   "description": "Curated collection of Claude Code plugins for TypeScript development",
-  "owner": {
-    "name": "Pau Velasco Garrofe"
-  },
+  "owner": { "name": "Pau Velasco Garrofe" },
   "version": "1.0.0",
   "plugins": [
     {
       "name": "typescript-rules",
+      "displayName": "TypeScript Rules",
       "source": "./",
       "description": "TypeScript coding conventions with automatic validation, review command, and reviewer agent",
+      "longDescription": "TypeScript coding conventions with automatic validation, review command, and reviewer agent. Enforces interface extends over &, discriminated unions, no enums, no any, no default exports, and import type usage.",
       "version": "1.0.0",
       "category": "development",
-      "author": {
-        "name": "Pau Velasco Garrofe"
-      },
+      "icon": "TS",
+      "iconClass": "typescript",
+      "accentColor": "#7c6aef",
+      "author": { "name": "Pau Velasco Garrofe" },
       "tags": ["typescript", "conventions", "code-review", "linting"]
     },
     {
       "name": "jsdoc-standards",
+      "displayName": "JSDoc Standards",
       "source": "./jsdoc-standards",
       "description": "JSDoc documentation standards with three enforcement levels (Minimal, Standard, Strict), automatic warnings, and on-demand review",
+      "longDescription": "JSDoc documentation standards with three enforcement levels (Minimal, Standard, Strict), automatic warnings on missing docs, and on-demand review command.",
       "version": "0.1.0",
       "category": "development",
-      "author": {
-        "name": "Pau Velasco Garrofe"
-      },
+      "icon": "/**",
+      "iconClass": "documentation",
+      "accentColor": "#c8a040",
+      "author": { "name": "Pau Velasco Garrofe" },
       "tags": ["jsdoc", "documentation", "typescript", "code-quality"]
+    },
+    {
+      "name": "workflow-toolkit",
+      "displayName": "Workflow Toolkit",
+      "source": "./workflow-toolkit",
+      "description": "A collection of developer workflow skills for planning, design review, and product requirements.",
+      "longDescription": "A collection of developer workflow skills covering the full lifecycle from idea stress-testing to PRD writing, issue breakdown, TDD implementation, and codebase architecture improvement.",
+      "version": "0.1.0",
+      "category": "development",
+      "icon": "WT",
+      "iconClass": "workflow",
+      "accentColor": "#34b482",
+      "author": { "name": "Pau Velasco Garrofe" },
+      "tags": ["workflow", "planning", "tdd", "prd", "code-review"]
     }
   ]
 }
